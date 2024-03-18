@@ -1,6 +1,6 @@
 <script setup></script>
 <template>
-  <div class="flex items-center gap-5">
+  <div class="flex items-center gap-5 mb-4">
     <svg
       class="opacity-30 cursor-pointer rotate-180 hover:opacity-100 transition hover:-translate-x-1"
       width="16"
