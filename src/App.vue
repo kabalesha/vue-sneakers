@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { onMounted, provide, reactive, ref, watch } from 'vue'
 import axios from 'axios'
 import Header from './components/Header/Header.vue'
 import CardList from './components/CardList.vue'
@@ -19,7 +19,53 @@ const onChangeSelect = (event) => {
 const onChangeInputValue = (event) => {
   filters.searchQuery = event.target.value
 }
+const fetchFavorites = async () => {
+  try {
+    const params = {
+      sortBy: filters.sortBy
+    }
+    if (filters.searchQuery) {
+      params.title = `*${filters.searchQuery}*`
+    }
+    const { data: favorites } = await axios.get(`https://78e26eecca6020b8.mokky.dev/favorites`)
+    items.value = items.value.map((item) => {
+      const favorite = favorites.find((favorite) => favorite.parentId === item.id)
+      if (!favorite) {
+        return item
+      }
+      return {
+        ...item,
+        isFavorite: true,
+        favorite: favorite.id
+      }
+    })
+    console.log(items.value)
+  } catch (error) {
+    console.log(error)
+  }
+}
 
+// const addToFavorite = async (item) => {
+//   item.isFavorite = !item.isFavorite
+// }
+const addToFavorite = async (item) => {
+  try {
+    if (!item.isFavorite) {
+      const obj = {
+        parentId: item.id
+      }
+      item.isFavorite = true
+      const { data } = await axios.post(`https://78e26eecca6020b8.mokky.dev/favorites`, obj)
+      item.favoriteId = data.id
+    } else {
+      item.isFavorite = false
+      await axios.delete(`https://78e26eecca6020b8.mokky.dev/favorites/${item.favoriteId}`)
+      item.favoriteId = null
+    }
+  } catch (error) {
+    console.log(error)
+  }
+}
 const fetchItems = async () => {
   try {
     const params = {
@@ -31,16 +77,24 @@ const fetchItems = async () => {
     const { data } = await axios.get(`https://78e26eecca6020b8.mokky.dev/items`, {
       params
     })
-    items.value = data
+    items.value = data.map((obj) => ({
+      ...obj,
+      isFavorite: false,
+      favoriteId: null,
+      isAdded: false
+    }))
   } catch (error) {
     console.log(error)
   }
 }
 
-onMounted(fetchItems)
+onMounted(async () => {
+  await fetchItems()
+  await fetchFavorites()
+})
 watch(filters, fetchItems)
+provide('addToFavorite', addToFavorite)
 </script>
-
 <template>
   <div class="bg-white w-4/5 m-auto rounded-xl shadow-xl mt-14">
     <!-- <Drawer /> -->
@@ -68,7 +122,7 @@ watch(filters, fetchItems)
         </div>
       </div>
       <div class="mt-10">
-        <CardList :items="items" />
+        <CardList :items="items" @addToFavorite="addToFavorite" />
       </div>
     </div>
   </div>
