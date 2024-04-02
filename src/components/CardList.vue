@@ -19,13 +19,5 @@ const onClickAdd = () => {
       :price="item.price"
       :onClickAdd="onClickAdd"
     />
-    <Card
-      v-for="item in items"
-      :key="item.id"
-      :title="item.title"
-      :imageUrl="item.imageUrl"
-      :price="item.price"
-      :onClickAdd="onClickAdd"
-    />
   </div>
 </template>
